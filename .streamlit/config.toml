@@ -1,0 +1,35 @@
+[server]
+enableStaticServing = true
+
+[theme]
+base = "light"
+primaryColor = "#3f7d52"
+backgroundColor = "#faf9f6"
+secondaryBackgroundColor = "#eef2ec"
+textColor = "#1c1b19"
+borderColor = "#e6e3dc"
+linkColor = "#3f7d52"
+linkUnderline = false
+
+greenColor = "#3f7d52"
+greenBackgroundColor = "#eaf3ec"
+greenTextColor = "#2f6140"
+redColor = "#b5563f"
+redBackgroundColor = "#f7e9e5"
+redTextColor = "#963f2b"
+blueColor = "#3f6d9e"
+blueBackgroundColor = "#eaf1f8"
+orangeColor = "#c99a3f"
+orangeBackgroundColor = "#faf3e4"
+
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@700;800&display=swap"
+baseFontSize = 16
+headingFontWeights = [800, 800, 700, 700, 600, 600]
+
+baseRadius = "large"
+buttonRadius = "full"
+showWidgetBorder = true
+
+dataframeBorderColor = "#e6e3dc"
+dataframeHeaderBackgroundColor = "#eef2ec"
