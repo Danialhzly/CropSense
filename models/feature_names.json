@@ -1,0 +1,26 @@
+{
+  "fused_feature_names": [
+    "N",
+    "P",
+    "K",
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall",
+    "PCA_1",
+    "PCA_2",
+    "PCA_3",
+    "PCA_4",
+    "PCA_5",
+    "MI_humidity",
+    "MI_rainfall",
+    "MI_K",
+    "MI_P",
+    "MI_N",
+    "RFE_N",
+    "RFE_P",
+    "RFE_K",
+    "RFE_humidity",
+    "RFE_rainfall"
+  ]
+}
