@@ -6,11 +6,6 @@ __pycache__/
 venv/
 env/
 
-# Trained artefacts (regenerate with: python train_model.py)
-models/*.joblib
-models/metrics.json
-models/feature_names.json
-
 # OS / IDE
 .DS_Store
 .vscode/
