@@ -163,6 +163,9 @@ div[data-testid="stStatusWidget"] { display: none !important; }
 .stButton > button[kind="primary"] {
     background: var(--primary); border: none; box-shadow: var(--shadow-sm); color: white;
 }
+.stButton > button[kind="primary"],
+.stButton > button[kind="primary"] *:not([role="img"]) { color: white !important; font-weight: 700 !important; }
+.stButton > button[kind="primary"] [role="img"] { color: white !important; }
 .stButton > button[kind="primary"]:hover {
     background: var(--primary-hover); transform: translateY(-2px) scale(1.01);
     box-shadow: 0 10px 22px rgba(63,125,82,0.32);
@@ -186,12 +189,15 @@ div[data-testid="stMetric"] {
 }
 [data-testid="stMetricLabel"] { color: var(--text-muted) !important; }
 
-/* tabs */
-.stTabs [data-baseweb="tab-list"] { gap: 6px; }
-.stTabs [data-baseweb="tab"] {
-    border-radius: 10px 10px 0 0; padding: 0.5rem 1.1rem; background: var(--tint); font-weight: 600;
+/* tabs (selectors cover both the older baseweb and newer react-aria tab markup) */
+.stTabs [data-baseweb="tab-list"], .stTabs [role="tablist"] { gap: 6px; }
+.stTabs [data-baseweb="tab"], .stTabs [role="tab"] {
+    border-radius: 10px !important; padding: 0.5rem 1.1rem !important; background: var(--tint); font-weight: 600;
 }
 .stTabs [aria-selected="true"] { background: var(--primary) !important; color: white !important; }
+.stTabs [aria-selected="true"] *:not([role="img"]) { color: white !important; font-weight: 700 !important; }
+.stTabs [aria-selected="true"] [role="img"] { color: white !important; }
+.stTabs [data-baseweb="tab-highlight"], .stTabs .react-aria-SelectionIndicator { display: none; }
 
 /* dataframes / expanders / alerts */
 div[data-testid="stAlertContainer"] { border-radius: 12px; }
