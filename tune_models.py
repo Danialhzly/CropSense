@@ -38,7 +38,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.base import clone
 from sklearn.ensemble import (
     BaggingClassifier,
     RandomForestClassifier,
@@ -55,29 +55,13 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from utils.preprocessing import HybridFeatureFusion, dataframe_to_raw
+from utils.preprocessing import FusionStep, dataframe_to_raw
 
 ROOT = Path(__file__).parent
 DATA_PATH = ROOT / "data" / "Crop_recommendation.csv"
 OUT_DIR = ROOT / "results" / "tuning"
 RANDOM_STATE = 42
 CV_FOLDS = 5
-
-
-class FusionStep(BaseEstimator, TransformerMixin):
-    """sklearn-compatible wrapper so hybrid fusion can be re-fitted inside each CV fold."""
-
-    def __init__(self, n_pca: int = 5, n_mi: int = 5, n_rfe: int = 5):
-        self.n_pca = n_pca
-        self.n_mi = n_mi
-        self.n_rfe = n_rfe
-
-    def fit(self, X, y):
-        self.fusion_ = HybridFeatureFusion(self.n_pca, self.n_mi, self.n_rfe).fit(X, y)
-        return self
-
-    def transform(self, X):
-        return self.fusion_.transform(X)
 
 
 # ------------------------------------------------------------------ #
