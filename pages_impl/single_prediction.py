@@ -1,6 +1,8 @@
 """Single prediction page — the core crop recommendation experience."""
 from __future__ import annotations
 
+import time
+
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
@@ -167,9 +169,13 @@ def render(model_ready: bool) -> None:
             return
 
         if predict:
-            rec = load_recommender()
-            X_raw = build_raw_input(**values)
-            st.session_state["last_result"] = rec.predict_and_explain(X_raw)
+            with st.spinner("Analysing your soil and climate values..."):
+                start = time.time()
+                rec = load_recommender()
+                X_raw = build_raw_input(**values)
+                st.session_state["last_result"] = rec.predict_and_explain(X_raw)
+                # Prediction is near-instant; keep the spinner up briefly so the user sees it work.
+                time.sleep(max(0.0, 1.2 - (time.time() - start)))
 
         result = st.session_state["last_result"]
         crop = result["crop"]

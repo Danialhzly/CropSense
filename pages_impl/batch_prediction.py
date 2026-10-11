@@ -10,15 +10,6 @@ from utils.preprocessing import BASE_FEATURES, dataframe_to_raw
 from utils.styles import CROP_EMOJI, page_header
 
 
-def _sample_csv() -> str:
-    sample = pd.DataFrame([
-        {"N": 90, "P": 42, "K": 43, "temperature": 21.0, "humidity": 82.0, "ph": 6.5, "rainfall": 203.0},
-        {"N": 20, "P": 130, "K": 200, "temperature": 23.0, "humidity": 92.0, "ph": 6.0, "rainfall": 110.0},
-        {"N": 40, "P": 70, "K": 80, "temperature": 26.0, "humidity": 55.0, "ph": 7.2, "rainfall": 90.0},
-    ])
-    return sample.to_csv(index=False)
-
-
 def render(model_ready: bool) -> None:
     page_header("📋", "Batch prediction",
                 "Upload a CSV with many rows to get recommendations for all of them at once.")
@@ -29,21 +20,11 @@ def render(model_ready: bool) -> None:
                     unsafe_allow_html=True)
         return
 
-    st.markdown(f"""
-    <div class="info-note">
-        Your CSV must contain these 7 columns (exact names):
-        <b>{', '.join(BASE_FEATURES)}</b>. Each row is one plot of land.
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.download_button("Download sample CSV", data=_sample_csv(), icon=":material/download:",
-                       file_name="sample_batch_input.csv", mime="text/csv")
-
     uploaded = st.file_uploader("Upload your CSV file", type=["csv"])
 
     if uploaded is None:
         st.markdown('<div class="empty-state-card" style="margin-top:1rem;"><div class="icon">📄</div>'
-                    '<b>No file uploaded yet.</b><br>Upload a CSV or download the sample above to try it.</div>',
+                    '<b>No file uploaded yet.</b><br>Upload a CSV with the columns N, P, K, temperature, humidity, ph and rainfall.</div>',
                     unsafe_allow_html=True)
         return
 
