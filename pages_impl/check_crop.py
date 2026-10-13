@@ -229,8 +229,8 @@ def _render_result(r: dict) -> None:
         st.success(f"Your temperature, humidity and rainfall suit {name}.", icon=":material/check_circle:")
 
     # 4. Alternatives when the chosen crop is risky
-    # Only suggest other crops when the model thinks one of them fits better than the chosen crop.
-    better = [(c, p) for c, p in r["alternatives"] if p > r["model_crop"]]
+    # Only suggest other crops the model rates above the chosen crop, ignoring near-zero matches.
+    better = [(c, p) for c, p in r["alternatives"] if p > r["model_crop"] and p >= 0.05]
     if r["risk"] != "low" and better:
         st.markdown('<div class="cc-step">4 · Crops that suit your land better right now</div>',
                     unsafe_allow_html=True)
