@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE, mutual_info_classif
@@ -112,6 +113,23 @@ class HybridFeatureFusion:
         names += [f"MI_{BASE_FEATURES[i]}" for i in self.mi_indices]   # 5 MI
         names += [f"RFE_{BASE_FEATURES[i]}" for i in self.rfe_indices] # 5 RFE
         self.fused_feature_names = names
+
+
+
+class FusionStep(BaseEstimator, TransformerMixin):
+    """sklearn-compatible wrapper so hybrid fusion can be re-fitted inside each CV fold."""
+
+    def __init__(self, n_pca: int = N_PCA, n_mi: int = N_MI, n_rfe: int = N_RFE):
+        self.n_pca = n_pca
+        self.n_mi = n_mi
+        self.n_rfe = n_rfe
+
+    def fit(self, X, y):
+        self.fusion_ = HybridFeatureFusion(self.n_pca, self.n_mi, self.n_rfe).fit(X, y)
+        return self
+
+    def transform(self, X):
+        return self.fusion_.transform(X)
 
 
 def build_raw_input(
