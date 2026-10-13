@@ -43,6 +43,7 @@ LOGO_B64 = _logo_b64()
 NAV_ITEMS = [
     ("home", "Home"),
     ("single", "Predict"),
+    ("check", "Check Crop"),
     ("batch", "Batch"),
     ("performance", "Dashboard"),
     ("about", "About"),
@@ -85,6 +86,9 @@ if current == "home":
 elif current == "single":
     from pages_impl import single_prediction
     single_prediction.render(MODEL_READY)
+elif current == "check":
+    from pages_impl import check_crop
+    check_crop.render(MODEL_READY)
 elif current == "batch":
     from pages_impl import batch_prediction
     batch_prediction.render(MODEL_READY)
