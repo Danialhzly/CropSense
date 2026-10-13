@@ -96,42 +96,59 @@ def _fmt(key: str, v: float) -> str:
     return f"{num} {unit}".strip()
 
 
+def _value_score(v: float, lo: float, hi: float) -> float:
+    """1.0 inside the crop's typical range, falling linearly to 0 as the value moves one
+    range-width outside it. Moving a value towards the range can only raise the score."""
+    if lo <= v <= hi:
+        return 1.0
+    width = max(hi - lo, 1e-9)
+    dist = lo - v if v < lo else v - hi
+    return max(0.0, 1.0 - dist / width)
+
+
 def _check(crop: str, values: dict) -> dict:
-    """Compare the farmer's values with the crop's typical range and score the land with the model."""
+    """Compare the farmer's values with the crop's typical range, then ask the model for a second opinion.
+
+    Suitability comes from the ranges, not the model. The model's probability answers a different
+    question ("which of the 22 crops does this land look most like?"), so it can rise when a value
+    leaves the range simply because a competing crop is ruled out. It is shown as a separate check.
+    """
     rec = load_recommender()
     ranges = crop_ranges().loc[crop]
-    idx = rec.class_names.index(crop)
 
-    rows, fixed = [], dict(values)
+    rows = []
     for key in BASE_FEATURES:
-        lo, hi, v = float(ranges[(key, LOW_Q)]), float(ranges[(key, HIGH_Q)]), values[key]
+        # Round the range to the precision it is shown at, so the page never says "4.5 to 7.6"
+        # while treating a value of 7.6 as out of range.
+        digits = 1 if key in ("ph", "temperature", "humidity") else 0
+        lo, hi = round(float(ranges[(key, LOW_Q)]), digits), round(float(ranges[(key, HIGH_Q)]), digits)
+        v = values[key]
         status = "low" if v < lo else "high" if v > hi else "ok"
-        rows.append({"key": key, "value": v, "lo": lo, "hi": hi, "status": status})
-        if key in SOIL and status != "ok":
-            fixed[key] = min(max(v, lo), hi)   # smallest change that brings it into range
+        rows.append({"key": key, "value": v, "lo": lo, "hi": hi, "status": status,
+                     "score": _value_score(v, lo, hi)})
 
-    _, proba_now = rec.predict(build_raw_input(**values))
-    _, proba_fixed = rec.predict(build_raw_input(**fixed))
-    now, after = float(proba_now[0][idx]), float(proba_fixed[0][idx])
+    now = float(np.mean([r["score"] for r in rows]))
+    after = float(np.mean([1.0 if r["key"] in SOIL else r["score"] for r in rows]))  # soil fixed, climate as is
+    met = sum(r["status"] == "ok" for r in rows)
 
-    # The model score drives the risk, but climate problems cannot be fixed by the farmer,
-    # so each one raises the risk: one climate problem means at least medium, two or more mean high.
+    n_soil = sum(1 for r in rows if r["key"] in SOIL and r["status"] != "ok")
     n_climate = sum(1 for r in rows if r["key"] in CLIMATE and r["status"] != "ok")
-    if now >= 0.6:
-        risk = "low"
-    elif after >= 0.6:
+    if n_climate >= 2:
+        risk = "high"       # the farmer cannot change the climate
+    elif n_climate == 1 or n_soil:
         risk = "medium"
     else:
-        risk = "high"
-    if n_climate >= 2:
-        risk = "high"
-    elif n_climate == 1 and risk == "low":
-        risk = "medium"
+        risk = "low"
 
-    order = np.argsort(proba_now[0])[::-1]
-    alternatives = [(rec.class_names[i], float(proba_now[0][i])) for i in order if rec.class_names[i] != crop][:3]
-    return {"crop": crop, "rows": rows, "now": now, "after": after, "risk": risk,
-            "alternatives": alternatives, "fixed": fixed}
+    _, proba = rec.predict(build_raw_input(**values))
+    proba = proba[0]
+    order = np.argsort(proba)[::-1]
+    model_best = (rec.class_names[order[0]], float(proba[order[0]]))
+    model_crop = float(proba[rec.class_names.index(crop)])
+    alternatives = [(rec.class_names[i], float(proba[i])) for i in order if rec.class_names[i] != crop][:3]
+    return {"crop": crop, "rows": rows, "now": now, "after": after, "met": met, "risk": risk,
+            "n_soil": n_soil, "n_climate": n_climate, "model_best": model_best,
+            "model_crop": model_crop, "alternatives": alternatives}
 
 
 def _render_result(r: dict) -> None:
@@ -141,12 +158,14 @@ def _render_result(r: dict) -> None:
     soil_issues = [x for x in r["rows"] if x["key"] in SOIL and x["status"] != "ok"]
     climate_issues = [x for x in r["rows"] if x["key"] in CLIMATE and x["status"] != "ok"]
 
-    risk_text = {
-        "low": ("Low risk", f"Your land suits {name} well."
-                + (" The soil fixes below will make it even better." if soil_issues else "")),
-        "medium": ("Medium risk", f"{name} can work here, but follow the advice and watch the risks below."),
-        "high": ("High risk", f"Your climate or soil is a poor match for {name}. See the risks below."),
-    }[r["risk"]]
+    if r["risk"] == "low":
+        risk_text = ("Low risk", f"All 7 of your values are within the usual range for {name}.")
+    elif r["risk"] == "medium" and not climate_issues:
+        risk_text = ("Medium risk", f"{name} can grow well here once you fix the soil as advised below.")
+    elif r["risk"] == "medium":
+        risk_text = ("Medium risk", f"{name} can work here, but one climate condition is a risk. See below.")
+    else:
+        risk_text = ("High risk", f"Several climate conditions are a poor match for {name}. See the risks below.")
 
     st.markdown(f"""
     <div class="result-card-dark">
@@ -163,17 +182,27 @@ def _render_result(r: dict) -> None:
 
     # 1. Suitability now vs after fixing the soil
     st.markdown('<div class="cc-step">1 · How well your land suits this crop</div>', unsafe_allow_html=True)
-    after_note = ("after the soil fixes below" if soil_issues else "no soil changes needed")
+    after_note = "after the soil fixes below" if soil_issues else "no soil changes needed"
     st.markdown(f"""
     <div class="cc-score-row">
-        <div class="cc-score"><div class="big">{r['now'] * 100:.1f}%</div>
-            <div class="small">Suitability now</div></div>
-        <div class="cc-score"><div class="big">{r['after'] * 100:.1f}%</div>
+        <div class="cc-score"><div class="big">{r['now'] * 100:.0f}%</div>
+            <div class="small">Suitability now · {r['met']} of 7 values in range</div></div>
+        <div class="cc-score"><div class="big">{r['after'] * 100:.0f}%</div>
             <div class="small">Suitability {after_note}</div></div>
     </div>
     """, unsafe_allow_html=True)
-    st.caption("Suitability is the trained model's probability for this crop, given your values. "
-               "The second score re-runs the model with your soil values moved into the crop's typical range.")
+    st.caption(f"Each of your 7 values scores 100% when it is inside the usual range for {name}, and less the "
+               f"further outside it is. Suitability is the average. Fixing the soil can only raise it; "
+               f"climate values stay as they are.")
+    best, best_p = r["model_best"]
+    if best == crop:
+        model_line = (f"<b>Model check:</b> the trained model agrees. Out of all 22 crops, your land "
+                      f"looks most like {name} ({best_p * 100:.0f}% match).")
+    else:
+        model_line = (f"<b>Model check:</b> out of all 22 crops, the trained model says your land looks most "
+                      f"like <b>{best.capitalize()}</b> ({best_p * 100:.0f}% match). {name} scores "
+                      f"{r['model_crop'] * 100:.0f}%.")
+    st.markdown(f'<div class="cc-item">{model_line}</div>', unsafe_allow_html=True)
 
     # 2. Soil: what to improve
     st.markdown('<div class="cc-step">2 · What to improve in your soil</div>', unsafe_allow_html=True)
@@ -200,12 +229,14 @@ def _render_result(r: dict) -> None:
         st.success(f"Your temperature, humidity and rainfall suit {name}.", icon=":material/check_circle:")
 
     # 4. Alternatives when the chosen crop is risky
-    if r["risk"] != "low":
+    # Only suggest other crops the model rates above the chosen crop, ignoring near-zero matches.
+    better = [(c, p) for c, p in r["alternatives"] if p > r["model_crop"] and p >= 0.05]
+    if r["risk"] != "low" and better:
         st.markdown('<div class="cc-step">4 · Crops that suit your land better right now</div>',
                     unsafe_allow_html=True)
         chips = "".join(
             f'<span class="model-chip">{CROP_EMOJI.get(c, "🌱")} {c.capitalize()} · {p * 100:.0f}%</span>'
-            for c, p in r["alternatives"])
+            for c, p in better)
         st.markdown(chips, unsafe_allow_html=True)
 
     with st.expander("See all 7 values compared with the usual range"):
