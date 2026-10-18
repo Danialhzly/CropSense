@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import streamlit as st
+from sklearn.naive_bayes import GaussianNB
 
 from utils.explainer import load_recommender
 from utils.preprocessing import BASE_FEATURES, build_raw_input
@@ -85,6 +86,43 @@ def crop_ranges() -> pd.DataFrame:
     return q  # columns: (feature, quantile)
 
 
+@st.cache_resource(show_spinner=False)
+def typicality_model() -> dict:
+    """Gaussian Naive Bayes fitted on the seven features, plus a reference level for every crop.
+
+    For each crop, Naive Bayes learns the mean and spread of every feature. The log-likelihood of a
+    set of values under that crop says how typical those values are for it, without comparing the
+    crop against the other 21 (the prior and the other classes are left out on purpose). The
+    reference level is the 5th-percentile log-likelihood of the crop's own samples, so a land as
+    typical as the least typical 5% of that crop's samples already counts as fully typical, in
+    the same way the 5th-95th percentile range counts as "in range".
+    """
+    df = pd.read_csv(DATA_PATH)
+    nb = GaussianNB().fit(df[BASE_FEATURES].values, df["label"].values)
+    classes = list(nb.classes_)
+    model = {"nb": nb, "classes": classes, "ref": {}}
+    for crop in classes:
+        ll = _log_likelihood(model, crop, df.loc[df["label"] == crop, BASE_FEATURES].values)
+        edge = float(np.percentile(ll, 5))
+        model["ref"][crop] = (edge, max(float(np.median(ll)) - edge, 1e-6))   # (edge level, scale)
+    return model
+
+
+def _log_likelihood(model: dict, crop: str, x: np.ndarray) -> np.ndarray:
+    i = model["classes"].index(crop)
+    mean, var = model["nb"].theta_[i], model["nb"].var_[i]
+    return (-0.5 * np.log(2 * np.pi * var) - 0.5 * (np.asarray(x, float) - mean) ** 2 / var).sum(axis=-1)
+
+
+def _typicality(crop: str, values: dict) -> float:
+    """1.0 when the land is at least as typical of the crop as the 5th-percentile sample of that crop,
+    then falling smoothly with the gap. Moving a value towards the crop's mean can only raise it."""
+    model = typicality_model()
+    edge, scale = model["ref"][crop]
+    ll = float(_log_likelihood(model, crop, [values[k] for k in BASE_FEATURES]))
+    return 1.0 if ll >= edge else float(np.exp(-(edge - ll) / scale))
+
+
 def _bold(text: str) -> str:
     """The advice text uses **bold**; convert it to HTML because it is rendered inside HTML cards."""
     return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)
@@ -107,16 +145,19 @@ def _value_score(v: float, lo: float, hi: float) -> float:
 
 
 def _check(crop: str, values: dict) -> dict:
-    """Compare the farmer's values with the crop's typical range, then ask the model for a second opinion.
+    """Score the land for the chosen crop, then ask the champion model for a second opinion.
 
-    Suitability comes from the ranges, not the model. The model's probability answers a different
-    question ("which of the 22 crops does this land look most like?"), so it can rise when a value
-    leaves the range simply because a competing crop is ruled out. It is shown as a separate check.
+    Suitability is the average of two checks that both measure how close the land is to what the crop
+    normally grows in: (1) the range check, which scores each value against the crop's typical range,
+    and (2) a Naive Bayes typicality score, which scores how typical all seven values are together.
+    Neither compares the crop with the other 21, so fixing the soil can only raise the score. The
+    champion model's probability answers a different question ("which of the 22 crops does this land
+    look most like?"), so it is shown separately as a model check.
     """
     rec = load_recommender()
     ranges = crop_ranges().loc[crop]
 
-    rows = []
+    rows, fixed = [], dict(values)
     for key in BASE_FEATURES:
         # Round the range to the precision it is shown at, so the page never says "4.5 to 7.6"
         # while treating a value of 7.6 as out of range.
@@ -126,9 +167,13 @@ def _check(crop: str, values: dict) -> dict:
         status = "low" if v < lo else "high" if v > hi else "ok"
         rows.append({"key": key, "value": v, "lo": lo, "hi": hi, "status": status,
                      "score": _value_score(v, lo, hi)})
+        if key in SOIL:
+            fixed[key] = min(max(v, lo), hi)    # smallest change that brings the soil value into range
 
-    now = float(np.mean([r["score"] for r in rows]))
-    after = float(np.mean([1.0 if r["key"] in SOIL else r["score"] for r in rows]))  # soil fixed, climate as is
+    range_now = float(np.mean([r["score"] for r in rows]))
+    range_after = float(np.mean([1.0 if r["key"] in SOIL else r["score"] for r in rows]))  # soil fixed, climate as is
+    typ_now, typ_after = _typicality(crop, values), _typicality(crop, fixed)
+    now, after = (range_now + typ_now) / 2, (range_after + typ_after) / 2
     met = sum(r["status"] == "ok" for r in rows)
 
     n_soil = sum(1 for r in rows if r["key"] in SOIL and r["status"] != "ok")
@@ -147,6 +192,7 @@ def _check(crop: str, values: dict) -> dict:
     model_crop = float(proba[rec.class_names.index(crop)])
     alternatives = [(rec.class_names[i], float(proba[i])) for i in order if rec.class_names[i] != crop][:3]
     return {"crop": crop, "rows": rows, "now": now, "after": after, "met": met, "risk": risk,
+            "range_now": range_now, "typ_now": typ_now, "range_after": range_after, "typ_after": typ_after,
             "n_soil": n_soil, "n_climate": n_climate, "model_best": model_best,
             "model_crop": model_crop, "alternatives": alternatives}
 
@@ -191,9 +237,11 @@ def _render_result(r: dict) -> None:
             <div class="small">Suitability {after_note}</div></div>
     </div>
     """, unsafe_allow_html=True)
-    st.caption(f"Each of your 7 values scores 100% when it is inside the usual range for {name}, and less the "
-               f"further outside it is. Suitability is the average. Fixing the soil can only raise it; "
-               f"climate values stay as they are.")
+    st.caption(f"Suitability is the average of two checks. **Range check ({r['range_now'] * 100:.0f}%):** each of "
+               f"your 7 values scores 100% when it is inside the usual range for {name}, and less the further "
+               f"outside it is. **Typicality check ({r['typ_now'] * 100:.0f}%):** a Naive Bayes model learned what "
+               f"{name} land normally looks like and scores how typical your 7 values are together. Fixing the "
+               f"soil can only raise the score; climate values stay as they are.")
     best, best_p = r["model_best"]
     if best == crop:
         model_line = (f"<b>Model check:</b> the trained model agrees. Out of all 22 crops, your land "
