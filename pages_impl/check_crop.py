@@ -243,11 +243,16 @@ def _render_result(r: dict) -> None:
                f"{name} land normally looks like and scores how typical your 7 values are together. Fixing the "
                f"soil can only raise the score; climate values stay as they are.")
     best, best_p = r["model_best"]
-    if best == crop:
-        model_line = (f"<b>Model check:</b> the trained model agrees. Out of all 22 crops, your land "
+    label = "<b>Model check (compares all 22 crops):</b>"
+    if best == crop and best_p >= 0.6:
+        model_line = (f"{label} the trained model agrees. Out of all 22 crops, your land "
                       f"looks most like {name} ({best_p * 100:.0f}% match).")
+    elif best == crop:
+        model_line = (f"{label} {name} is the closest of the 22 crops, but only a weak match "
+                      f"({best_p * 100:.0f}%). Your land does not clearly fit any single crop, so this does not "
+                      f"mean the land suits {name}. Use the suitability score above to judge that.")
     else:
-        model_line = (f"<b>Model check:</b> out of all 22 crops, the trained model says your land looks most "
+        model_line = (f"{label} the trained model says your land looks most "
                       f"like <b>{best.capitalize()}</b> ({best_p * 100:.0f}% match). {name} scores "
                       f"{r['model_crop'] * 100:.0f}%.")
     st.markdown(f'<div class="cc-item">{model_line}</div>', unsafe_allow_html=True)
