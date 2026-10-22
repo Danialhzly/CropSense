@@ -114,7 +114,7 @@ def render() -> None:
         <p>
             The <b>{champ}</b> model — {champ_desc} — is used as the production model because
             it achieved the highest accuracy on the held-out test set among all 9 models compared,
-            with ties broken by 5-fold cross-validation stability. See the
+            with ties broken by 10-fold cross-validation stability. See the
             <a href="?nav=performance" target="_self">Dashboard</a> for the full comparison.
         </p>
     </div>

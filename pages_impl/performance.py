@@ -98,7 +98,7 @@ def render(model_ready: bool) -> None:
     c4.metric("F1 score", f"{champ_m['f1'] * 100:.2f}%")
 
     if "cv_mean" in champ_m:
-        st.caption(f"5-fold cross-validation accuracy: "
+        st.caption(f"10-fold cross-validation accuracy: "
                    f"{champ_m['cv_mean'] * 100:.2f}% ± {champ_m['cv_std'] * 100:.2f}%  "
                    f"(low variance means stable performance).")
 
