@@ -11,6 +11,7 @@ Output: results/sanity_check_crop.json
 from __future__ import annotations
 
 import json
+import os
 import sys
 import types
 from pathlib import Path
@@ -30,6 +31,10 @@ FEATURES = cc.BASE_FEATURES
 SOIL, CLIMATE = cc.SOIL, cc.CLIMATE
 RNG = np.random.default_rng(42)
 
+# Optional: CC_PCT="10,90" re-runs every test with a different "typical range" cut-off (robustness check).
+LOWQ, HIGHQ = (float(v) / 100 for v in os.environ.get("CC_PCT", "5,95").split(","))
+cc.LOW_Q, cc.HIGH_Q = LOWQ, HIGHQ
+
 df = pd.read_csv(ROOT / "data" / "Crop_recommendation.csv").drop_duplicates().dropna().reset_index(drop=True)
 train, test = train_test_split(df, test_size=0.20, stratify=df["label"], random_state=42)
 crops = sorted(df["label"].unique())
@@ -40,7 +45,7 @@ nb = GaussianNB().fit(train[FEATURES].values, train["label"].values)
 model = {"nb": nb, "classes": list(nb.classes_), "ref": {}}
 for crop in crops:
     ll = cc._log_likelihood(model, crop, train.loc[train["label"] == crop, FEATURES].values)
-    edge = float(np.percentile(ll, 5))
+    edge = float(np.percentile(ll, LOWQ * 100))
     model["ref"][crop] = (edge, max(float(np.median(ll)) - edge, 1e-6))
 
 
@@ -162,6 +167,6 @@ for c, v in test_rows:
 res["t5_score_by_values_out_of_range"] = {str(n): {"n": len(a), "mean_score": float(np.mean(a))}
                                           for n, a in sorted(by_out.items())}
 
-out = ROOT / "results" / "sanity_check_crop.json"
+out = Path(os.environ.get("CC_OUT", ROOT / "results" / "sanity_check_crop.json"))
 out.write_text(json.dumps(res, indent=2))
 print(json.dumps(res, indent=2))
