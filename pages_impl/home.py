@@ -104,8 +104,8 @@ def render(model_ready: bool) -> None:
             <div class="step-num">01</div>
             <div class="step-icon">🧪</div>
             <div class="step-title">Enter your values</div>
-            <div class="step-text">Seven numbers: N, P, K and pH from a Department of Agriculture
-            soil test, plus temperature, humidity and rainfall from MetMalaysia.</div>
+            <div class="step-text">Seven numbers: N, P and K (as ratios, like the dataset), soil pH from a
+            Department of Agriculture soil test, plus temperature, humidity and rainfall from MetMalaysia.</div>
         </div>
         <div class="step-card reveal reveal-2">
             <div class="step-num">02</div>

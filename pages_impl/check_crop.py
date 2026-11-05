@@ -129,7 +129,7 @@ def _bold(text: str) -> str:
 
 
 def _fmt(key: str, v: float) -> str:
-    unit = UNITS[key]
+    unit = "" if UNITS[key] == "ratio" else UNITS[key]    # N, P, K are unit-less ratios in the dataset
     num = f"{v:.1f}" if key in ("ph", "temperature", "humidity") else f"{v:.0f}"
     return f"{num} {unit}".strip()
 
