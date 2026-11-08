@@ -305,9 +305,12 @@ def _render_result(r: dict) -> None:
 
     st.markdown("""
     <div class="info-note" style="margin-top:1rem;">
-        This is general guidance based on the typical growing conditions in the dataset. It names the
-        <b>type</b> of fertiliser, not the amount. Exact amounts depend on your farm size and soil test, so
-        please confirm with a Department of Agriculture extension officer before applying.
+        <b>Use this to compare your land with typical conditions for a crop. It is guidance, not a
+        guarantee. Check with your agriculture office before spending money.</b><br>
+        The "usual range" is the middle 90% of the samples for this crop in the Kaggle crop recommendation
+        dataset. It describes conditions recorded in that dataset, not a proven growing requirement. The advice
+        names the <b>type</b> of fertiliser, not the amount. Exact amounts depend on your farm size and soil
+        test, so please confirm with a Department of Agriculture extension officer before applying.
     </div>
     """, unsafe_allow_html=True)
 
