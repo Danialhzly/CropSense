@@ -19,12 +19,12 @@ def page_header(icon: str, title: str, subtitle: str) -> None:
 
 # Slider configuration for the 7 input features: (label, min, max, default, step, unit, help)
 FEATURE_INPUTS = [
-    ("N",           "Nitrogen (N)",     0.0,   140.0,  90.0,  1.0,  "mg/kg",
-     "Soil nitrogen content. Get this from a soil test."),
-    ("P",           "Phosphorus (P)",   5.0,   145.0,  42.0,  1.0,  "mg/kg",
-     "Soil phosphorus content."),
-    ("K",           "Potassium (K)",    5.0,   205.0,  43.0,  1.0,  "mg/kg",
-     "Soil potassium content."),
+    ("N",           "Nitrogen (N)",     0.0,   140.0,  90.0,  1.0,  "ratio",
+     "Ratio of nitrogen content in the soil, on the same scale as the dataset."),
+    ("P",           "Phosphorus (P)",   5.0,   145.0,  42.0,  1.0,  "ratio",
+     "Ratio of phosphorus content in the soil, on the same scale as the dataset."),
+    ("K",           "Potassium (K)",    5.0,   205.0,  43.0,  1.0,  "ratio",
+     "Ratio of potassium content in the soil, on the same scale as the dataset."),
     ("temperature", "Temperature",      8.0,   44.0,   21.0,  0.1,  "°C",
      "Average temperature. Available from MetMalaysia."),
     ("humidity",    "Humidity",         14.0,  100.0,  82.0,  0.1,  "%",

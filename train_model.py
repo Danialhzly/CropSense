@@ -12,7 +12,7 @@ Pipeline (the eleven-phase methodology, condensed to code):
   5.  Hybrid feature fusion (PCA + MI + RFE -> 22 fused features)
   6.  Train 6 baseline classifiers
   7.  Train 3 ensemble models (First Stacking, Second Stacking, Voting)
-  8.  Evaluate all 9 models (accuracy, precision, recall, F1, 5-fold CV)
+  8.  Evaluate all 9 models (accuracy, precision, recall, F1, 10-fold CV)
   9.  Build SHAP TreeExplainer on a dedicated Random Forest proxy
   10. Persist every artefact to models/
 
@@ -58,7 +58,7 @@ MODELS_DIR = ROOT / "models"
 MODELS_DIR.mkdir(exist_ok=True)
 
 RANDOM_STATE = 42
-CV_FOLDS = 5
+CV_FOLDS = 10
 
 
 # ------------------------------------------------------------------ #
@@ -207,7 +207,7 @@ def main() -> None:
         trained_models[name] = model
         print(f"        {name:20s} acc={all_results[name]['accuracy']:.4f}")
 
-    # 8. 5-fold cross validation for every model
+    # 8. 10-fold cross validation for every model
     print(f"[cv   ] running {CV_FOLDS}-fold cross validation ...")
     skf = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
     cv_builders = {
@@ -230,7 +230,7 @@ def main() -> None:
         print(f"        {name:20s} cv={scores.mean():.4f} +/- {scores.std():.4f}")
 
     # Champion = the model with the highest test-set accuracy, breaking ties
-    # with the higher 5-fold CV mean (more stable across folds).
+    # with the higher 10-fold CV mean (more stable across folds).
     champion_name = max(
         all_results,
         key=lambda name: (all_results[name]["accuracy"], all_results[name]["cv_mean"]),

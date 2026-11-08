@@ -8,7 +8,7 @@ hyperparameters have meaningfully changed the results?
 Protocol (fixed before running):
   1. Same 80/20 stratified split (random_state=42) as train_model.py, for every model.
   2. The test set is NEVER used to choose settings. Every setting is chosen with
-     5-fold stratified cross validation on the 1,760 training rows only.
+     10-fold stratified cross validation on the 1,760 training rows only.
   3. Scaling and hybrid feature fusion are re-fitted inside every CV fold
      (sklearn Pipeline), so the validation fold never leaks into preprocessing.
   4. Grid search tests parameter combinations together, not one at a time.
@@ -61,7 +61,7 @@ ROOT = Path(__file__).parent
 DATA_PATH = ROOT / "data" / "Crop_recommendation.csv"
 OUT_DIR = ROOT / "results" / "tuning"
 RANDOM_STATE = 42
-CV_FOLDS = 5
+CV_FOLDS = 10
 
 
 # ------------------------------------------------------------------ #

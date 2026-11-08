@@ -1,11 +1,11 @@
 model,combinations,default_params,default_cv_mean,default_cv_std,best_params,best_cv_mean,best_cv_std,gain_pct_points,adopted
-Logistic Regression,5,{'C': 1.0},0.9761363636363637,0.007320510640184761,{'C': 10},0.977840909090909,0.0055087271107003835,0.17045454545453476,False
-Decision Tree,24,"{'criterion': 'gini', 'max_depth': None, 'min_samples_split': 2}",0.984090909090909,0.0028971701781777353,"{'criterion': 'gini', 'max_depth': None, 'min_samples_split': 2}",0.984090909090909,0.0028971701781777353,0.0,False
-Random Forest,18,"{'n_estimators': 200, 'max_depth': None, 'min_samples_split': 2}",0.9886363636363636,0.008035304331665289,"{'max_depth': None, 'min_samples_split': 2, 'n_estimators': 300}",0.9897727272727274,0.0077489668732874,0.11363636363637131,False
-KNN,20,"{'n_neighbors': 5, 'weights': 'uniform', 'metric': 'minkowski'}",0.9710227272727273,0.0072762775425373296,"{'metric': 'manhattan', 'n_neighbors': 3, 'weights': 'distance'}",0.9795454545454545,0.005508727110700358,0.8522727272727182,True
-Naive Bayes,7,{'var_smoothing': 1e-09},0.9943181818181819,0.005081972676135881,{'var_smoothing': 1e-12},0.9943181818181819,0.005081972676135881,0.0,False
-XGBoost,27,"{'n_estimators': 200, 'max_depth': 6, 'learning_rate': 0.1}",0.9875,0.00526910141789528,"{'learning_rate': 0.05, 'max_depth': 3, 'n_estimators': 300}",0.9886363636363636,0.0064782694607905655,0.1136363636363602,False
-Bagging,3,{'n_estimators': 10},0.9863636363636363,0.006327004957761363,{'n_estimators': 50},0.9886363636363636,0.005681818181818188,0.2272727272727315,False
-First Stacking,2,benchmark members,0.99375,0.0048876848108196655,tuned members,0.99375,0.0048876848108196655,0.0,False
-Second Stacking,2,benchmark members,0.9931818181818182,0.005849789852833541,tuned members,0.9931818181818182,0.005849789852833541,0.0,False
-Voting,1,benchmark members,0.9943181818181819,0.0035934973411004276,no member changed,0.9943181818181819,0.0035934973411004276,0.0,False
+Logistic Regression,5,{'C': 1.0},0.9772727272727273,0.008802234877744114,{'C': 100},0.9801136363636364,0.011985808585073272,0.28409090909090606,False
+Decision Tree,24,"{'criterion': 'gini', 'max_depth': None, 'min_samples_split': 2}",0.9852272727272726,0.0081152595778896,"{'criterion': 'gini', 'max_depth': None, 'min_samples_split': 2}",0.9852272727272726,0.0081152595778896,0.0,False
+Random Forest,18,"{'n_estimators': 200, 'max_depth': None, 'min_samples_split': 2}",0.99375,0.005360216552304893,"{'max_depth': None, 'min_samples_split': 5, 'n_estimators': 300}",0.9943181818181819,0.005681818181818187,0.056818181818185653,False
+KNN,20,"{'n_neighbors': 5, 'weights': 'uniform', 'metric': 'minkowski'}",0.9727272727272724,0.009439345298770522,"{'metric': 'manhattan', 'n_neighbors': 5, 'weights': 'distance'}",0.9806818181818182,0.007276277542537306,0.795454545454577,False
+Naive Bayes,7,{'var_smoothing': 1e-09},0.9943181818181819,0.005681818181818188,{'var_smoothing': 1e-12},0.9943181818181819,0.005681818181818188,0.0,False
+XGBoost,27,"{'n_estimators': 200, 'max_depth': 6, 'learning_rate': 0.1}",0.9897727272727271,0.0061195054626528335,"{'learning_rate': 0.1, 'max_depth': 9, 'n_estimators': 100}",0.9909090909090909,0.006818181818181808,0.11363636363637131,False
+Bagging,3,{'n_estimators': 10},0.990340909090909,0.006250000000000007,{'n_estimators': 50},0.990909090909091,0.006327004957761376,0.056818181818196756,False
+First Stacking,1,benchmark members,0.9948863636363635,0.005360216552304898,no member changed,0.9948863636363635,0.005360216552304898,0.0,False
+Second Stacking,1,benchmark members,0.9943181818181819,0.004401117438872061,no member changed,0.9943181818181819,0.004401117438872061,0.0,False
+Voting,1,benchmark members,0.9948863636363636,0.003977272727272728,no member changed,0.9948863636363636,0.003977272727272728,0.0,False

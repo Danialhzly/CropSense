@@ -153,7 +153,8 @@ def render(model_ready: bool) -> None:
         st.markdown("""
         <div class="info-note" style="margin-top:1rem;">
             <b>Where to get these values?</b><br>
-            Soil values (N, P, K, pH) — from a Department of Agriculture soil test (free) or a
+            N, P and K are ratios of nutrient content in the soil, on the same scale as the dataset
+            the model learned from. Soil pH — from a Department of Agriculture soil test (free) or a
             private lab. Climate values (temperature, humidity, rainfall) — from the
             MetMalaysia website for your district.
         </div>

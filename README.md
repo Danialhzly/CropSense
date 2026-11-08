@@ -57,7 +57,7 @@ FYP WEBSITE/
    ```
 
    This runs the full pipeline: cleaning, encoding, an 80/20 stratified split, scaling,
-   hybrid feature fusion, training all 9 models, 5-fold cross-validation, and building the
+   hybrid feature fusion, training all 9 models, 10-fold cross-validation, and building the
    SHAP explainer. It takes a few minutes and only needs to be done once.
 
 3. Launch the web app:
